@@ -15,12 +15,17 @@ jobs:
           mv AndroidManifest.xml app/src/main/
           mv index.html app/src/main/assets/
           mv MainActivity.java app/src/main/java/com/shadowxploit/aquarium/
+          sed -i 's/android:label="Aquarium"/android:label="Terquarium"/' app/src/main/AndroidManifest.xml
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
-      - uses: android-actions/setup-android@v3
+      - name: Android SDK
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" > /dev/null || true
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: 8.7 }
       - run: gradle assembleDebug --no-daemon
+      - name: Rename APK
+        run: mv app/build/outputs/apk/debug/*.apk Terquarium.apk
       - uses: actions/upload-artifact@v4
-        with: { name: aquarium-apk, path: app/build/outputs/apk/debug/*.apk }
-        
+        with: { name: Terquarium, path: Terquarium.apk }
