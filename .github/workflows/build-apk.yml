@@ -1,0 +1,83 @@
+name: Build APK
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.9' }
+
+      - name: Build proot bundle (from Termux packages, aarch64)
+        run: |
+          set -e
+          python3 - <<'PY'
+          import urllib.request, gzip, re, subprocess, os
+          BASE = 'https://packages.termux.dev/apt/termux-main/'
+          raw = None
+          for n in ('Packages', 'Packages.gz'):
+              try:
+                  raw = urllib.request.urlopen(BASE + 'dists/stable/main/binary-aarch64/' + n).read()
+                  if n.endswith('.gz'): raw = gzip.decompress(raw)
+                  break
+              except Exception as e:
+                  print('skip', n, e)
+          idx = {}
+          for st in raw.decode().split('\n\n'):
+              f = dict(re.findall(r'^([A-Za-z-]+): (.*)$', st, re.M))
+              if 'Package' in f: idx[f['Package']] = f
+          want, todo = [], ['proot']
+          skip = {'termux-tools', 'termux-keyring', 'termux-licenses', 'termux-core'}
+          while todo:
+              p = todo.pop()
+              if p in want or p in skip or p not in idx: continue
+              want.append(p)
+              for d in idx[p].get('Depends', '').split(','):
+                  d = re.sub(r'\(.*?\)', '', d.split('|')[0]).strip()
+                  if d: todo.append(d)
+          print('packages:', want)
+          os.makedirs('/tmp/x', exist_ok=True)
+          for p in want:
+              fn = '/tmp/%s.deb' % p
+              urllib.request.urlretrieve(BASE + idx[p]['Filename'], fn)
+              subprocess.check_call(['dpkg-deb', '-x', fn, '/tmp/x'])
+          PY
+          U=/tmp/x/data/data/com.termux/files/usr
+          test -f $U/bin/proot
+          readelf -d $U/bin/proot | grep NEEDED || true
+          ls $U/lib | head -30
+          cd $U
+          LIST=""
+          for d in bin/proot lib libexec; do [ -e "$d" ] && LIST="$LIST $d"; done
+          tar -cf "$GITHUB_WORKSPACE/proot-aarch64.tar" $LIST
+
+      - name: Assemble Android project
+        run: |
+          set -e
+          P=proj; A=$P/app/src/main
+          mkdir -p $A/java/com/shadowxploit/aquarium $A/assets $A/res/mipmap-xxxhdpi
+          APP=""; ROOT=""
+          for f in build*.gradle; do
+            if grep -q namespace "$f"; then APP="$f"; else ROOT="$f"; fi
+          done
+          echo "app=$APP root=$ROOT"
+          cp settings.gradle $P/settings.gradle
+          cp "$ROOT" $P/build.gradle
+          cp "$APP" $P/app/build.gradle
+          cp MainActivity.java $A/java/com/shadowxploit/aquarium/
+          cp index.html $A/assets/
+          cp proot-aarch64.tar $A/assets/
+          cp icon.png $A/res/mipmap-xxxhdpi/ic_launcher.png
+          cp "$(ls AndroidManifest*.xml | head -1)" $A/AndroidManifest.xml
+          grep -q 'android:icon' $A/AndroidManifest.xml || sed -i 's|<application |<application android:icon="@mipmap/ic_launcher" |' $A/AndroidManifest.xml
+          sed -i 's|<application |<application android:largeHeap="true" |' $A/AndroidManifest.xml
+
+      - name: Build
+        run: gradle -p proj assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Aquarium-apk
+          path: proj/app/build/outputs/apk/debug/*.apk
