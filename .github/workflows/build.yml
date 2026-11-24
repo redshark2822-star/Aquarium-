@@ -1,0 +1,25 @@
+name: Build APK
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Arrange files
+        run: |
+          mkdir -p app/src/main/assets app/src/main/java/com/shadowxploit/aquarium
+          for f in build*.gradle; do
+            if grep -q "apply false" "$f"; then mv "$f" root.tmp; else mv "$f" app/build.gradle; fi
+          done
+          mv root.tmp build.gradle
+          mv AndroidManifest.xml app/src/main/
+          mv index.html app/src/main/assets/
+          mv MainActivity.java app/src/main/java/com/shadowxploit/aquarium/
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: 8.7 }
+      - run: gradle assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with: { name: aquarium-apk, path: app/build/outputs/apk/debug/*.apk }
