@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>shadowxploit@kali</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'Courier New',monospace}
+
+/* ── layout: aquarium + optional side terminal ── */
+#root{display:flex;height:100%;width:100%;position:relative}
+#tank{flex:1;position:relative;overflow:hidden;
+  background:linear-gradient(#040d16,#061120 45%,#020810);
+  touch-action:none;user-select:none;-webkit-user-select:none;min-width:0}
+#glow{position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 40% at 50% -8%,rgba(0,80,180,.22),transparent 70%);
+  pointer-events:none}
+#rays{position:absolute;inset:-10% -20% 0;
+  background:repeating-linear-gradient(105deg,transparent 0 38px,rgba(0,100,200,.04) 38px 72px,transparent 72px 130px);
+  -webkit-mask-image:linear-gradient(#000,transparent 80%);mask-image:linear-gradient(#000,transparent 80%);
+  animation:sw 14s ease-in-out infinite alternate;pointer-events:none}
+@keyframes sw{to{transform:translateX(60px)}}
+#sand{position:absolute;left:0;right:0;bottom:0;height:22px;
+  background:linear-gradient(transparent,rgba(20,15,5,.8));
+  color:#3a2f10;font-size:11px;line-height:26px;white-space:nowrap;overflow:hidden;pointer-events:none}
+
+/* ── entities ── */
+.e{position:absolute;white-space:pre;font-size:12px;line-height:12px;pointer-events:none}
+.del .e{pointer-events:auto;animation:bl .6s infinite}
+.del .e::after{content:'';position:absolute;inset:-10px}
+@keyframes bl{50%{opacity:.35}}
+.e.pop{animation:pop .3s forwards!important;pointer-events:none}
+@keyframes pop{50%{transform:scale(1.8);opacity:.5}to{transform:scale(0);opacity:0}}
+.f{position:absolute;font-size:10px;color:#fc4;pointer-events:none;animation:fl var(--d) linear forwards}
+@keyframes fl{to{transform:translateY(var(--y));opacity:0}}
+.bb{position:absolute;border-radius:50%;border:1px solid rgba(0,120,255,.3);pointer-events:none;animation:fl var(--d) linear forwards}
+.rp{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.25);pointer-events:none;transform:translate(-50%,-50%);animation:rp .5s ease-out forwards}
+@keyframes rp{to{width:60px;height:60px;opacity:0}}
+
+/* ── hacked overlay ── */
+#hackOverlay{position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+#hackOverlay.on{display:flex;animation:glitch 2s infinite}
+@keyframes glitch{0%,100%{opacity:1}48%{opacity:1}50%{opacity:.7;transform:translate(2px,-1px)}52%{opacity:1;transform:none}}
+#hackTxt{color:#0f0;font-size:clamp(10px,2.5vw,16px);text-align:center;line-height:1.6;text-shadow:0 0 10px #0f0}
+
+/* ── badge / toast ── */
+#badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:2px;padding:4px 12px;border:1px solid;border-radius:20px;background:rgba(0,0,0,.7);opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none;z-index:5}
+#badge.on{opacity:1}
+#toast{position:absolute;top:46px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);border:1px solid #0a1a2a;border-radius:20px;padding:4px 14px;font-size:10px;color:#5a7a9a;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;z-index:20}
+#toast.on{opacity:1}
+
+/* ── swipe-left panel ── */
+#hint{position:absolute;top:50%;left:4px;transform:translateY(-50%);font-size:9px;letter-spacing:1px;color:rgba(255,255,255,.2);pointer-events:none;writing-mode:vertical-rl;text-orientation:mixed;animation:pu 3s infinite}
+@keyframes pu{50%{opacity:.2}}
+#panel{position:absolute;top:0;left:0;bottom:0;width:176px;background:#050d14;border-right:1px solid #0a1a28;
+  transform:translateX(-105%);transition:transform .35s cubic-bezier(.25,.8,.25,1);z-index:10;
+  display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 8px calc(10px + env(safe-area-inset-bottom,0px))}
+#panel.open{transform:none}
+.hd2{width:3px;height:36px;background:#0a1e30;border-radius:2px;margin:0 auto 12px}
+#g{display:grid;grid-template-columns:1fr 1fr;gap:6px;overflow-y:auto}
+.b{padding:8px 2px 7px;border:1px solid #0d1e2e;border-radius:8px;background:#060f19;font-size:10px;color:var(--c);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.b.on{border-color:var(--c);background:#0a1e30}
+.b:active{transform:scale(.95)}
+.b pre{font:bold 9px/9px 'Courier New',monospace;margin:0;min-height:27px;display:flex;align-items:center;white-space:pre;text-shadow:0 0 6px var(--c)}
+
+/* ── split-screen terminal ── */
+#termSide{width:0;overflow:hidden;background:#000;border-left:1px solid #111;transition:width .35s cubic-bezier(.25,.8,.25,1);display:flex;flex-direction:column;flex-shrink:0}
+#termSide.open{width:min(52vw,420px)}
+#termSide.full{width:100vw}
+
+/* ── fullscreen terminal overlay (fallback / close) ── */
+#term{position:fixed;left:0;right:0;top:0;height:100%;background:#000;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .4s cubic-bezier(.25,.8,.25,1);z-index:100}
+#term.open{transform:none}
+
+/* ── shared terminal internals ── */
+.tb{display:flex;justify-content:space-between;align-items:center;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 6px;border-bottom:1px solid #111;font-size:11px;color:#444;flex-shrink:0}
+.tb .tc{cursor:pointer;color:#333}
+.tb .ts{cursor:pointer;color:#333;margin-left:8px}
+.to{flex:1;overflow-y:auto;padding:8px 12px;font-size:11px;line-height:1.5;color:#bbb;white-space:pre-wrap;word-break:break-all;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.tir{padding:5px 12px calc(6px + env(safe-area-inset-bottom,0px));border-top:1px solid #111;font-size:11px;flex-shrink:0}
+.tp2{display:flex;align-items:center}
+.tci{flex:1;min-width:0;margin-left:6px;background:transparent;border:0;outline:0;color:#ddd;font:inherit;caret-color:#fff;user-select:text;-webkit-user-select:text}
+.pl{color:#4466aa}.pu{color:#2255cc;font-weight:700}.pp{color:#aaa;font-weight:700}
+.g{color:#3dff7a}.c{color:#2ab8d8}.y{color:#c8a830}.r{color:#cc4444}.d{color:#444}.w{color:#bbb}.dr{color:#3366cc;font-weight:700}
+</style>
+</head>
+<body>
+<div id="root">
+  <!-- ── AQUARIUM ── -->
+  <div id="tank">
+    <div id="glow"></div><div id="rays"></div><div id="sand"></div>
+    <div id="hackOverlay"><pre id="hackTxt"></pre></div>
+    <div id="badge"></div><div id="toast"></div>
+    <div id="hint">◀ swipe</div>
+    <div id="panel">
+      <div class="hd2"></div>
+      <div id="g"></div>
+    </div>
+  </div>
+
+  <!-- ── SIDE TERMINAL ── -->
+  <div id="termSide">
+    <div class="tb" id="stb">
+      <span id="stt" style="font-size:10px;color:#444">shadowxploit@kali</span>
+      <span style="display:flex">
+        <span class="ts" id="stkill" title="stop running command">^C</span>
+        <span class="ts" id="stfull" title="toggle fullscreen">⛶</span>
+        <span class="tc" id="stclose" style="margin-left:8px">✕</span>
+      </span>
+    </div>
+    <div class="to" id="sout"></div>
+    <div class="tir">
+      <div id="sp1"></div>
+      <div class="tp2"><span class="pl">└─</span><span class="pu">$</span><input id="sci" class="tci" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="send"></div>
+    </div>
+  </div>
+</div>
+
+<!-- fullscreen terminal (unused now, kept for compat) -->
+<div id="term">
+  <div class="tb" id="tb">
+    <span id="tt" style="font-size:10px">shadowxploit@kali</span>
+    <span class="tc" id="tx">✕ close</span>
+  </div>
+  <div class="to" id="out"></div>
+  <div class="tir">
+    <div id="p1"></div>
+    <div class="tp2"><span class="pl">└─</span><span class="pu">$</span><input id="ci" class="tci" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="send"></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id),tank=$('tank'),panel=$('panel'),rnd=n=>Math.random()*n|0;
+const W=()=>tank.clientWidth,H=()=>tank.clientHeight,FL=()=>H()-14;
+$('sand').textContent=".:'.,`:.,'.:".repeat(60);
+let ents=[],mode=null,po=false;
+const FM={'<':'>','>':'<','(':')',')':'(','/':'\\','\\':'/','[':']',']':'[','{':'}','}':'{','`':"'","'":'`'};
+const flip=s=>{const L=s.split('\n'),w=Math.max(...L.map(l=>l.length));return L.map(l=>[...l.padEnd(w)].reverse().map(c=>FM[c]||c).join('')).join('\n')};
+
+class E{
+  constructor(k,a,c,x,y){this.k=k;this.a=a;this.L=flip(a);const L=a.split('\n');this.h=L.length*12;this.w=Math.max(...L.map(l=>l.length))*7.2;this.x=x;this.y=y;
+    this.el=document.createElement('div');this.el.className='e';this.el.style.color=c;this.el.textContent=a;tank.appendChild(this.el);
+    this.el.onclick=ev=>{if(mode==='del'){ev.stopPropagation();this.kill()}};ents.push(this)}
+  draw(){this.el.style.left=this.x+'px';this.el.style.top=this.y+'px'}
+  face(r){if(r!==this.r){this.r=r;this.el.textContent=r?this.a:this.L}}
+  kill(){ents.splice(ents.indexOf(this),1);this.el.classList.add('pop');setTimeout(()=>this.el.remove(),300);toast('Deleted')}
+}
+
+const FT=[['><((°>','#4dd8ff',.6],['><(((>','#2effa0',.8],['>><(°>','#ffb347',.4],['><°>','#c3a1ff',1],['><((¤>','#ff5c7a',.7],['><###>','#9bf04a',.45]];
+class Fish extends E{
+  constructor(x,y){const t=FT[rnd(FT.length)];super('fish',t[0],t[1],x,y);this.s=t[2];this.vx=(.2+Math.random()*.4)*this.s*(Math.random()<.5?1:-1);this.vy=0;this.p=Math.random()*6.28;this.bt=Math.random()*200;this.tx=null}
+  up(){this.p+=.022;this.vy+=Math.sin(this.p)*.012;this.vy*=.96;
+    if(this.tx!=null){const dx=this.tx-this.x,dy=this.ty-this.y;this.vx+=dx*.004;this.vy+=dy*.01;this.vx=Math.max(-2,Math.min(2,this.vx));
+      if(Math.abs(dx)<15&&Math.abs(dy)<15){this.tx=null;this.vx=(this.vx>0?1:-1)*(.2+.3*this.s)}}
+    this.x+=this.vx;this.y+=this.vy;const fl=FL()-this.h-8;
+    if(this.x<0){this.x=0;this.vx=Math.abs(this.vx)}if(this.x>W()-this.w){this.x=W()-this.w;this.vx=-Math.abs(this.vx)}
+    if(this.y<8){this.y=8;this.vy=Math.abs(this.vy)*.5}if(this.y>fl){this.y=fl;this.vy=-Math.abs(this.vy)*.5}
+    if(--this.bt<=0){this.bt=100+rnd(200);bub(this.x+20,this.y)}
+    this.face(this.vx>0);this.draw()}
+}
+class Walker extends E{
+  constructor(k,a,c,x,y,sp){super(k,a,c,x,y);this.sp=sp;this.vy=0;this.d=Math.random()<.5?1:-1;this.wt=0;this.tx=null}
+  up(){const fl=FL()-this.h+2;
+    if(this.y<fl-1){this.vy+=.15;this.y+=this.vy;if(this.y>=fl){this.y=fl;this.vy=0}}
+    else{this.y=fl;
+      if(this.tx!=null){this.d=this.tx>this.x?1:-1;this.x+=this.d*this.sp*2;if(Math.abs(this.tx-this.x)<5)this.tx=null}
+      else if(this.wt>0)this.wt--;
+      else{this.x+=this.d*this.sp;if(Math.random()<.01)this.wt=40+rnd(80);if(Math.random()<.008)this.d*=-1;if(Math.random()<.004){this.vy=-2.2;this.y-=1}}}
+    if(this.x<0){this.x=0;this.d=1}if(this.x>W()-this.w){this.x=W()-this.w;this.d=-1}
+    this.face(this.d>0);this.draw()}
+}
+class Floater extends E{
+  constructor(k,fr,c,x,y,sp){super(k,fr[0],c,x,y);this.fr=fr;this.vx=sp*(Math.random()<.5?1:-1);this.p=Math.random()*6.28;this.f=0}
+  up(){this.p+=.03;this.y+=Math.sin(this.p)*.5;this.x+=this.vx;
+    if(this.x<0){this.x=0;this.vx=Math.abs(this.vx)}if(this.x>W()-this.w){this.x=W()-this.w;this.vx=-Math.abs(this.vx)}
+    this.y=Math.max(10,Math.min(FL()-this.h-4,this.y));
+    const f=(Date.now()/450|0)%2;if(f!==this.f){this.f=f;this.el.textContent=this.fr[f]}this.draw()}
+}
+const WC=['#2ecc71','#27ae60','#7bed9f','#1abc9c'];
+class Weed extends E{
+  constructor(x,n){const A=Array.from({length:n},(_,i)=>i%2?' )':'( ').join('\n'),B=Array.from({length:n},(_,i)=>i%2?'( ':' )').join('\n');super('weed',A,WC[rnd(4)],x,0);this.B=B;this.ph=Math.random()*9;this.f=0}
+  up(){const f=((Date.now()/700+this.ph)|0)%2;if(f!==this.f){this.f=f;this.el.textContent=f?this.B:this.a}this.y=FL()-this.h+2;this.draw()}
+}
+class Shell extends E{
+  constructor(x){super('shell',' .--. \n(____)','#f8bbd0',x,0);this.o=' \\  / \n(_oo_)';this.ph=Math.random()*9;this.m=0}
+  up(){const m=((Date.now()/1000+this.ph)%7<1.2)|0;if(m!==this.m){this.m=m;this.el.textContent=m?this.o:this.a;if(m&&Math.random()<.5)bub(this.x+16,this.y)}this.y=FL()-this.h+3;this.draw()}
+}
+class Deco extends E{constructor(a,c,x){super('deco',a,c,x,0)}up(){this.y=FL()-this.h+2;this.draw()}}
+const OC=[' .---. \n( o o )\n/|/|/|\\',' .---. \n( o o )\n\\|\\|\\|/'],JF=[' .-^-. \n(_____)\n |/|\\| ',' .-^-. \n(_____)\n \\|/|/ '];
+
+function bub(x,y){const b=document.createElement('div');b.className='bb';const s=3+rnd(7);b.style.cssText=`width:${s}px;height:${s}px;left:${x}px;top:${y}px;--y:${-(y+10)}px;--d:${1.5+Math.random()*2.5}s`;tank.appendChild(b);b.onanimationend=()=>b.remove()}
+function rip(x,y){const r=document.createElement('div');r.className='rp';r.style.left=x+'px';r.style.top=y+'px';tank.appendChild(r);r.onanimationend=()=>r.remove()}
+function food(x,y){for(let i=0;i<5+rnd(5);i++)setTimeout(()=>{const p=document.createElement('div'),px=Math.max(5,Math.min(W()-10,x+(Math.random()-.5)*50)),fall=(H()-y)*(.4+Math.random()*.5);
+  p.className='f';p.textContent=['·','°','•','˙','∘'][rnd(5)];p.style.cssText=`left:${px}px;top:${y}px;--y:${fall}px;--d:${1.2+Math.random()*1.5}s`;tank.appendChild(p);p.onanimationend=()=>p.remove();
+  ents.forEach(e=>{if(e.k==='fish'&&Math.random()<.5){e.tx=px;e.ty=y+fall*.5}else if(e instanceof Walker)e.tx=px})},i*70)}
+
+const CAP={fish:15,shrimp:8,weed:15,shell:8,octo:4},NM={fish:'fish',shrimp:'shrimp',weed:'seaweed',shell:'shell',octo:'octopus'};
+function add(m,x,y){if(ents.filter(e=>e.k===m).length>=CAP[m]){toast('Limit reached ('+CAP[m]+')');return}
+  if(m==='fish')new Fish(x-20,y-6);else if(m==='shrimp')new Walker('shrimp','~=(°>','#ff8a65',x-20,y-6,.35);else if(m==='octo')new Floater('octo',OC,'#c792ea',x-25,y-18,.25);else if(m==='weed')new Weed(x-8,3+rnd(4));else new Shell(x-20);
+  toast('Added '+NM[m])}
+let tt;function toast(m){const e=$('toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),1600)}
+
+/* ── left panel buttons ── */
+const BT=[['feed',"  ° ·  °\n · : ˙ ·\n ˙  ∘ ·",'Feed','#c8a830','TAP TO DROP FOOD'],['fish'," ,--.\n><((°>\n '--'",'Fish','#4dd8ff','TAP TO ADD FISH'],['shrimp',"  .-.\n~=(°>\n   ''",'Shrimp','#ff8a65','TAP TO ADD SHRIMP'],['weed'," ) ( \n( ) )\n ) ( ",'Seaweed','#4cd964','TAP TO PLANT SEAWEED'],
+['shell'," .--. \n(_@@_)\n '--' ",'Shell','#f8bbd0','TAP TO PLACE A SHELL'],['octo'," .---. \n( o o )\n/|/|/|\\",'Octopus','#c792ea','TAP TO ADD OCTOPUS'],['del',"\\ /\n X \n/ \\",'Delete','#cc3333','TAP AN ITEM TO DELETE'],['term',"┌───┐\n│$_ │\n└───┘",'Terminal','#2a9a4a']];
+BT.forEach(b=>{const d=document.createElement('div');d.className='b';d.style.setProperty('--c',b[3]);d.innerHTML='<pre></pre>'+b[2];d.firstChild.textContent=b[1];d.dataset.m=b[0];
+  d.onclick=e=>{e.stopPropagation();b[0]==='term'?openTerm():setMode(b[0])};$('g').appendChild(d)});
+function setMode(m){const bd=$('badge'),B=BT.find(b=>b[0]===m);document.body.classList.remove('del');
+  document.querySelectorAll('.b').forEach(x=>x.classList.remove('on'));
+  if(mode===m){mode=null;bd.classList.remove('on')}
+  else{mode=m;bd.textContent='[ '+B[4]+' ]';bd.style.color=B[3];bd.classList.add('on');document.querySelector(`.b[data-m=${m}]`).classList.add('on');if(m==='del')document.body.classList.add('del')}
+  closeP()}
+
+tank.onclick=e=>{if(panel.contains(e.target)||!mode)return;const r=tank.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  if(mode==='del'){toast('Tap an item to delete it');return}
+  rip(x,y);mode==='feed'?food(x,y):add(mode,x,y)};
+
+/* ── swipe left to open panel ── */
+let sy=0,sx=0;
+tank.addEventListener('touchstart',e=>{if(!panel.contains(e.target)){sy=e.touches[0].clientY;sx=e.touches[0].clientX}},{passive:true});
+tank.addEventListener('touchmove',e=>{if(panel.contains(e.target))return;const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy,pw=panel.offsetWidth;
+  if(!po&&dx>20&&Math.abs(dy)<Math.abs(dx)){panel.style.transition='none';panel.style.transform=`translateX(${-pw*(1-Math.min(1,(dx-20)/80))}px)`}
+  else if(po&&dx<-20&&Math.abs(dy)<Math.abs(dx)){panel.style.transition='none';panel.style.transform=`translateX(${-pw*Math.min(1,(-dx-20)/80)}px)`}},{passive:true});
+tank.addEventListener('touchend',e=>{if(panel.contains(e.target))return;panel.style.transition='';panel.style.transform='';const dx=e.changedTouches[0].clientX-sx;
+  if(!po&&dx>50)openP();else if(po&&dx<-50)closeP();else panel.classList.toggle('open',po)},{passive:true});
+function openP(){po=true;panel.classList.add('open');$('hint').style.opacity=0}
+function closeP(){po=false;panel.classList.remove('open');$('hint').style.opacity=''}
+(function loop(){ents.forEach(e=>e.up&&e.up());requestAnimationFrame(loop)})();
+
+/* ── initial entities ── */
+for(let i=0;i<5;i++)new Fish(rnd(W()-90),40+rnd(H()-200));
+[.1,.35,.6,.85].forEach((p,i)=>new Weed(W()*p,3+rnd(4)));
+new Deco('  ___  \n /   \\ \n/_____\\','#1a2530',W()*.22);
+new Deco(' \\ | / \n  \\|/  \n   |   ','#cc3366',W()*.7);
+new Deco('\\|/\n-*-\n/|\\','#884400',W()*.5);
+new Shell(W()*.8);new Walker('crab','V(o_o)V','#aa2222',W()*.4,H()-60,.3);
+new Floater('jelly',JF,'#883399',W()*.6,H()*.3,.18);
+
+/* ═══════════════════════════════
+   TERMINAL ENGINE (shared)
+═══════════════════════════════ */
+const U='shadowxploit';
+let dir='~',hist=[],hi=-1;
+const inst=new Set(['bash','zsh','coreutils','apt','dpkg']);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const P1=()=>`<span class="pl">┌──(</span><span class="pu">${U}㉿kali</span><span class="pl">)-[</span><span class="pp">${dir}</span><span class="pl">]</span>`;
+const P2='<span class="pl">└─</span><span class="pu">$</span> ';
+
+/* active output element (side or fullscreen) */
+let activeOut=null,activeCI=null,activeP1El=null;
+function getOut(){return activeOut||$('sout')}
+function getCI(){return activeCI||$('sci')}
+
+function pr(h,c=''){const o=getOut(),s=document.createElement('div');s.className=c;s.innerHTML=h;o.appendChild(s);o.scrollTop=o.scrollHeight}
+function err(h){pr(h,'r')}
+function syncP(){
+  const p1El=activeP1El||$('sp1');if(p1El)p1El.innerHTML=P1();
+  [$('tt'),$('stt')].forEach(el=>{if(el)el.textContent=U+'@kali: '+dir})}
+
+const PK={nmap:['7.94','5.6 MB','network exploration tool'],vim:['9.1','2.1 MB','Vi IMproved text editor'],git:['2.45','3.2 MB','distributed version control'],python3:['3.12','4.8 MB','Python interpreter'],
+curl:['8.5','0.4 MB','URL transfer tool'],wget:['1.21','0.3 MB','file retriever'],htop:['3.3','0.2 MB','process viewer'],neofetch:['7.1','0.1 MB','system info with logo'],cowsay:['3.04','0.1 MB','talking cow'],
+tmux:['3.4','0.4 MB','terminal multiplexer'],nodejs:['20.12','28 MB','JavaScript runtime'],gcc:['13.2','85 MB','GNU C compiler'],hydra:['9.5','1.8 MB','login cracker'],sqlmap:['1.8','2.0 MB','SQL injection tool'],
+'metasploit-framework':['6.4','250 MB','penetration testing framework'],john:['1.9','2.4 MB','password cracker'],nikto:['2.5','0.5 MB','web server scanner'],gobuster:['3.6','8 MB','directory brute-forcer']};
+const FS={'~':['Desktop','Documents','Downloads','.ssh','.bashrc','.zshrc'],'~/Desktop':['README.md'],'~/Documents':['notes.txt','targets.txt'],'~/Downloads':[],'~/.ssh':['id_rsa.pub'],
+'~/Desktop/README.md':'# shadowxploit@kali\nASCII Aquarium + Kali terminal.\nTry: sudo apt update, sudo apt install nmap, neofetch\n\nAquarium commands:\n  aq fish add      - add a fish\n  aq kill all      - kill all entities\n  aq nowater       - drain the water\n  aq water         - restore the water\n  aq hack          - hack the server\n  aq status        - show entity count',
+'~/Documents/notes.txt':'# Recon notes\n10.10.10.1 - ports 22,80,443 open\ncheck /admin','~/Documents/targets.txt':'10.10.10.1\n10.10.10.2\n192.168.1.0/24',
+'~/.bashrc':'# ~/.bashrc\nalias ll="ls -la"\nexport TERM=xterm-256color','~/.zshrc':'# ~/.zshrc\nsetopt autocd\nPROMPT_ALT=twoline','~/.ssh/id_rsa.pub':'ssh-rsa AAAAB3NzaC1yc2E... shadowxploit@kali'};
+const isD=p=>Array.isArray(FS[p]),rpp=a=>a==='~'||a.startsWith('~/')?a:dir+'/'+a;
+const nf=c=>err('zsh: command not found: '+esc(c));
+const ipRnd=()=>`10.10.${1+rnd(50)}.${2+rnd(200)}`;
+
+/* ── AQUARIUM COMMANDS ── */
+let noWater=false;
+function aqCmd(args){
+  const sub=args[0]||'',arg2=args[1]||'',arg3=args[2]||'';
+  if(!sub){
+    pr('<span class="g">aq — aquarium control</span>');
+    [['aq fish add [n]','add fish (default 1)'],['aq fish kill','remove all fish'],['aq shrimp add [n]','add shrimp'],['aq weed add [n]','add seaweed'],['aq kill all','remove ALL entities'],['aq kill fish|shrimp|weed|shell|octo|crab|jelly','remove by type'],
+     ['aq feed','drop food'],['aq nowater','drain the water'],['aq water','restore water'],['aq hack','hack the server'],['aq status','show entity counts'],['aq clear','clear decorations only']
+    ].forEach(([c,d])=>pr(`  <span class="c">${esc(c).padEnd(36)}</span><span class="d">${d}</span>`));
+    return;}
+  if(sub==='status'){
+    const counts={};ents.forEach(e=>counts[e.k]=(counts[e.k]||0)+1);
+    pr('<span class="g">Aquarium entities:</span>');
+    Object.entries(counts).forEach(([k,v])=>pr(`  <span class="c">${k.padEnd(12)}</span> ${v}`));
+    if(!Object.keys(counts).length)pr('  <span class="d">(empty tank)</span>');
+    return;}
+  if(sub==='kill'){
+    const target=arg2;
+    if(target==='all'){
+      const n=ents.length;[...ents].forEach(e=>e.kill());pr(`<span class="r">Killed ${n} entities.</span>`)}
+    else if(target){
+      const before=ents.length;[...ents].filter(e=>e.k===target).forEach(e=>e.kill());
+      pr(`<span class="r">Killed ${before-ents.length} ${esc(target)}(s).</span>`)}
+    else err('Usage: aq kill all | aq kill <type>');
+    return;}
+  if(sub==='fish'){
+    if(arg2==='add'){const n=Math.min(parseInt(arg3)||1,5);for(let i=0;i<n;i++)new Fish(rnd(W()-90),40+rnd(H()-200));pr(`<span class="g">Added ${n} fish.</span>`)}
+    else if(arg2==='kill'){[...ents].filter(e=>e.k==='fish').forEach(e=>e.kill());pr('<span class="r">All fish killed.</span>')}
+    else err('Usage: aq fish add [n] | aq fish kill');return;}
+  if(sub==='shrimp'){
+    if(arg2==='add'){const n=Math.min(parseInt(arg3)||1,4);for(let i=0;i<n;i++)new Walker('shrimp','~=(°>','#ff8a65',rnd(W()-60),H()-60,.35);pr(`<span class="g">Added ${n} shrimp.</span>`)}
+    else if(arg2==='kill'){[...ents].filter(e=>e.k==='shrimp').forEach(e=>e.kill());pr('<span class="r">All shrimp killed.</span>')}
+    else err('Usage: aq shrimp add [n] | aq shrimp kill');return;}
+  if(sub==='weed'){
+    if(arg2==='add'){const n=Math.min(parseInt(arg3)||1,5);for(let i=0;i<n;i++)new Weed(rnd(W()-20),3+rnd(4));pr(`<span class="g">Added ${n} seaweed.</span>`)}
+    else if(arg2==='kill'){[...ents].filter(e=>e.k==='weed').forEach(e=>e.kill());pr('<span class="r">All seaweed removed.</span>')}
+    else err('Usage: aq weed add [n] | aq weed kill');return;}
+  if(sub==='feed'){food(W()/2,H()/3);pr('<span class="y">Food dropped.</span>');return;}
+  if(sub==='nowater'){
+    noWater=true;tank.style.background='#050d0a';$('glow').style.opacity='0';$('rays').style.opacity='0';$('sand').style.opacity='0';
+    [...tank.querySelectorAll('.bb')].forEach(b=>b.remove());
+    pr('<span class="r">WARNING: Water drained. Fish are suffocating.</span>');return;}
+  if(sub==='water'){
+    noWater=false;tank.style.background='';$('glow').style.opacity='';$('rays').style.opacity='';$('sand').style.opacity='';
+    pr('<span class="g">Water restored.</span>');return;}
+  if(sub==='hack'){hackServer();return;}
+  if(sub==='clear'){[...ents].filter(e=>e.k==='deco').forEach(e=>e.kill());pr('<span class="r">Decorations cleared.</span>');return;}
+  err('aq: unknown subcommand: '+esc(sub)+'. Type "aq" for help.');}
+
+/* ── HACK SEQUENCE ── */
+async function hackServer(){
+  pr('<span class="r">[*] Initiating exploit sequence...</span>');await sleep(300);
+  pr('<span class="y">[*] Scanning target 10.10.10.1...</span>');await sleep(500);
+  pr('<span class="g">[+] Found vulnerability CVE-2024-9999 (RCE)</span>');await sleep(400);
+  pr('<span class="y">[*] Sending payload...</span>');await sleep(600);
+  pr('<span class="g">[+] Shell obtained. UID=0</span>');await sleep(400);
+  pr('<span class="r">[*] Defacing target...</span>');await sleep(500);
+  pr('<span class="g">[+] DONE. Server defaced by shadowxploit</span>');
+  // show defacement on aquarium
+  const ov=$('hackOverlay'),txt=$('hackTxt');
+  ov.classList.add('on');
+  txt.innerHTML=`<span style="color:#0f0">
+ _   _    _    ____ _  _______ ____  
+| | | |  / \\  / ___| |/ / ____|  _ \\ 
+| |_| | / _ \\| |   | ' /|  _| | | | |
+|  _  |/ ___ \\ |___| . \\| |___| |_| |
+|_| |_/_/   \\_\\____|_|\\_\\_____|____/ 
+
+  ██████╗ ██╗   ██╗    ███████╗██╗  ██╗
+  ██╔══██╗╚██╗ ██╔╝    ██╔════╝╚██╗██╔╝
+  ██████╔╝ ╚████╔╝     ███████╗ ╚███╔╝ 
+  ██╔══██╗  ╚██╔╝      ╚════██║ ██╔██╗ 
+  ██████╔╝   ██║       ███████║██╔╝ ██╗
+  ╚═════╝    ╚═╝       ╚══════╝╚═╝  ╚═╝
+
+<span style="color:#0a0">  HACKED BY shadowxploit</span>
+  <span style="color:#060">this site has been pwned</span>
+  <span style="color:#040">contact: shadowxploit@kali</span>
+
+  <span style="color:#0a0">[ tap to close ]</span>
+</span>`;
+  ov.style.pointerEvents='auto';
+  ov.onclick=()=>{ov.classList.remove('on');ov.style.pointerEvents='none'}}
+
+const C={
+help(){pr('<span class="g">Available commands:</span>');
+  [['aq [sub]','control the aquarium (type aq for help)'],['ls [-la] [dir]','list files'],['cd, pwd, cat','navigate / read'],['mkdir, touch, rm','manage files'],['clear, echo, history','shell basics'],['whoami, id, uname -a','identity / system'],['date, uptime, ps, df -h, free -h','system status'],
+  ['ifconfig, ping <host>','network'],['sudo <cmd>','run as root'],['sudo apt update/install/remove','package management'],['nmap <host>','port scan (after install)'],['neofetch, cowsay <txt>','fun (after install)'],['exit','close terminal']
+  ].forEach(([c,d])=>pr(`  <span class="c">${esc(c).padEnd(28)}</span><span class="d">${d}</span>`))},
+ls(a){const f=a.filter(x=>x[0]==='-').join(''),t=a.find(x=>x[0]!=='-'),p=t?rpp(t):dir;if(FS[p]===undefined)return err(`ls: cannot access '${esc(t)}': No such file or directory`);if(!isD(p))return pr(esc(t));
+  let l=FS[p].filter(x=>f.includes('a')||x[0]!=='.');if(f.includes('a'))l=['.','..',...l];const d=x=>x==='.'||x==='..'||isD(p+'/'+x),D=new Date();
+  if(f.includes('l')){pr('total '+l.length*4);l.forEach(x=>pr(`${d(x)?'drwxr-xr-x':'-rw-r--r--'} ${d(x)?2:1} ${U} ${U} ${String(d(x)?4096:(FS[p+'/'+x]||'').length).padStart(5)} ${D.toDateString().slice(4,10)} ${D.toTimeString().slice(0,5)} ${d(x)?`<span class="dr">${x}</span>`:esc(x)}`))}
+  else if(l.length)pr(l.map(x=>d(x)?`<span class="dr">${x}</span>`:esc(x)).join('  '))},
+cat(a){if(!a[0])return err('cat: missing operand');const n=FS[rpp(a[0])];if(n===undefined)return err(`cat: ${esc(a[0])}: No such file or directory`);if(Array.isArray(n))return err(`cat: ${esc(a[0])}: Is a directory`);pr(esc(n))},
+cd(a){const t=a[0]||'~';if(t==='..')dir=dir.includes('/')?dir.slice(0,dir.lastIndexOf('/')):'~';else if(t==='~')dir='~';else{const p=rpp(t);if(isD(p))dir=p;else err(`cd: no such file or directory: ${esc(t)}`)}syncP()},
+pwd(){pr(dir==='~'?'/home/'+U:'/home/'+U+'/'+dir.slice(2))},
+whoami(a,r){pr(r?'root':U)},
+id(a,r){pr(r?'uid=0(root) gid=0(root) groups=0(root)':`uid=1000(${U}) gid=1000(${U}) groups=1000(${U}),4(adm),27(sudo),100(users),114(netdev)`)},
+echo(a){pr(esc(a.join(' ')))},
+clear(){getOut().innerHTML=''},
+history(){hist.slice().reverse().forEach((c,i)=>pr(`${String(i+1).padStart(5)}  ${esc(c)}`))},
+mkdir(a){a.forEach(x=>{FS[rpp(x)]=[];FS[dir].push(x)})},
+touch(a){a.forEach(x=>{if(FS[rpp(x)]===undefined){FS[rpp(x)]='';FS[dir].push(x)}})},
+rm(a){const R=a.some(x=>/^-.*r/.test(x));a.filter(x=>x[0]!=='-').forEach(x=>{const p=rpp(x);if(FS[p]===undefined)return err(`rm: cannot remove '${esc(x)}': No such file or directory`);if(isD(p)&&!R)return err(`rm: cannot remove '${esc(x)}': Is a directory`);delete FS[p];FS[dir]=FS[dir].filter(y=>y!==x)})},
+uname(a){pr(a.includes('-a')?'Linux kali 6.6.9-amd64 #1 SMP PREEMPT_DYNAMIC Kali 6.6.9-1kali1 (2024-01-08) x86_64 GNU/Linux':'Linux')},
+date(){pr(new Date().toString())},
+uptime(){const s=performance.now()/1000|0;pr(` ${new Date().toTimeString().slice(0,8)} up ${s/3600|0}:${String((s%3600)/60|0).padStart(2,'0')},  1 user,  load average: 0.08, 0.05, 0.01`)},
+ps(){pr('    PID TTY          TIME CMD','w');['      1 ?        00:00:03 systemd','    420 ?        00:00:00 sshd','    512 pts/0    00:00:00 zsh','    513 pts/0    00:00:01 aquarium','    599 pts/0    00:00:00 ps'].forEach(l=>pr(l))},
+df(){pr('Filesystem      Size  Used Avail Use% Mounted on','w');['/dev/sda1       119G   12G  101G  11% /','tmpfs           3.9G  1.9M  3.9G   1% /dev/shm','tmpfs           1.6G  1.1M  1.6G   1% /run'].forEach(l=>pr(l))},
+free(){pr('               total        used        free      shared  buff/cache   available','w');pr('Mem:           7.7Gi       342Mi       6.3Gi       1.1Mi       1.1Gi       7.1Gi');pr('Swap:          2.0Gi          0B       2.0Gi')},
+ifconfig(){const m=()=>(256+rnd(256)).toString(16).slice(1);pr('<span class="w">eth0</span>: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500');pr(`        inet <span class="g">${ipRnd()}</span>  netmask 255.255.255.0  broadcast 10.10.255.255`);pr(`        ether <span class="y">${[1,2,3,4,5,6].map(m).join(':')}</span>  txqueuelen 1000  (Ethernet)`);pr('        RX packets 8421  bytes 11234567 (10.7 MiB)\n        TX packets 6103  bytes 823451 (804.1 KiB)\n');pr('<span class="w">lo</span>: flags=73&lt;UP,LOOPBACK,RUNNING&gt;  mtu 65536\n        inet 127.0.0.1  netmask 255.0.0.0')},
+async ping(a){if(!a[0])return err('ping: usage error: Destination address required');const h=esc(a[0]),i=a[0]==='localhost'?'127.0.0.1':ipRnd();pr(`PING ${h} (${i}) 56(84) bytes of data.`);
+  for(let n=1;n<=4;n++){await sleep(350);pr(`64 bytes from ${i}: icmp_seq=${n} ttl=${50+rnd(14)} time=${(5+Math.random()*30).toFixed(1)} ms`)}pr(`\n--- ${h} ping statistics ---\n4 packets transmitted, 4 received, 0% packet loss, time 3012ms`)},
+async nmap(a){if(!inst.has('nmap'))return nf('nmap');const t=a.find(x=>x[0]!=='-');if(!t)return pr('Nmap 7.94 ( https://nmap.org )\nUsage: nmap [Scan Type(s)] [Options] {target specification}');
+  pr('Starting Nmap 7.94 ( https://nmap.org ) at '+new Date().toISOString().slice(0,16).replace('T',' '));await sleep(700);pr(`Nmap scan report for ${esc(t)}\nHost is up (0.012s latency).\nPORT    STATE SERVICE\n<span class="g">22/tcp  open  ssh\n80/tcp  open  http\n443/tcp open  https</span>\n\nNmap done: 1 IP address (1 host up) scanned in 1.83 seconds`)},
+async neofetch(){if(!inst.has('neofetch'))return nf('neofetch');const A=['   ,.-----.,    ','  .:ccccccc:.   ',' ;cccc:..:cccc; ',' :ccc:    :ccc: ',' ;cccc:..:cccc; ','  `:ccccccc:`   ','    `-----`     '],
+  I=[`<b>${U}@kali</b>`,'-----------------','OS: Kali GNU/Linux Rolling x86_64','Kernel: 6.6.9-amd64','Shell: zsh 5.9',`Packages: ${inst.size} (dpkg)`,`Aquarium: ${ents.length} entities`];
+  for(let i=0;i<7;i++){pr(`<span class="c">${A[i]}</span> ${I[i]}`);await sleep(40)}},
+cowsay(a){if(!inst.has('cowsay'))return nf('cowsay');const m=esc(a.join(' ')||'Moo!');pr(` ${'-'.repeat(m.length+2)}\n&lt; ${m} &gt;\n ${'-'.repeat(m.length+2)}\n        \\   ^__^\n         \\  (oo)\\_______\n            (__)\\       )\\/\\\n                ||----w |\n                ||     ||`)},
+aq(a){aqCmd(a)},
+exit(){closeTerm()}};
+
+async function apt(a,r){const s=a[0],k=a.slice(1).filter(x=>x[0]!=='-');
+  if(!r&&['update','upgrade','install','remove'].includes(s))return err(s==='update'?'Reading package lists... Done\nE: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)\nE: Unable to lock directory /var/lib/apt/lists/\nW: Problem unlinking the file /var/cache/apt/pkgcache.bin - RemoveCaches (13: Permission denied)':'E: Could not open lock file /var/lib/dpkg/lock-frontend - open (13: Permission denied)\nE: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), are you root?');
+  if(s==='update'){pr('Hit:1 http://http.kali.org/kali kali-rolling InRelease');await sleep(300);pr('Get:2 http://http.kali.org/kali kali-rolling/main amd64 Packages [20.1 MB]');await sleep(500);pr('Fetched 20.1 MB in 3s (6,702 kB/s)\nReading package lists... Done\nBuilding dependency tree... Done\nReading state information... Done\n<span class="y">12 packages can be upgraded.</span>')}
+  else if(s==='upgrade'){pr('Reading package lists... Done\nBuilding dependency tree... Done\nCalculating upgrade... Done\n0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.')}
+  else if(s==='install'){if(!k.length)return err('E: No packages specified');
+    for(const n of k){if(inst.has(n)){pr(`${n} is already the newest version (${PK[n]?PK[n][0]:'1.0'}).`,'d');continue}const i=PK[n];if(!i){err(`E: Unable to locate package ${esc(n)}`);continue}
+      pr(`Reading package lists... Done\nBuilding dependency tree... Done\nThe following NEW packages will be installed:\n  ${n}\nNeed to get ${i[1]} of archives.`);
+      pr(`Get:1 http://http.kali.org/kali kali-rolling/main amd64 ${n} amd64 ${i[0]}`);const b=document.createElement('div');b.className='g';getOut().appendChild(b);
+      for(let x=0;x<=20;x++){b.textContent=`Fetched [${'█'.repeat(x)}${'░'.repeat(20-x)}] ${x*5}%`;getOut().scrollTop=getOut().scrollHeight;await sleep(25)}
+      pr(`Selecting previously unselected package ${n}.`);await sleep(150);pr(`Unpacking ${n} (${i[0]}) ...`);await sleep(150);pr(`Setting up ${n} (${i[0]}) ...\nProcessing triggers for man-db (2.12.0-3) ...`);inst.add(n)}}
+  else if(s==='remove'){if(!k.length)return err('E: No packages specified');for(const n of k){if(!inst.has(n)||!PK[n]){pr(`Package '${esc(n)}' is not installed, so not removed`,'y');continue}pr(`Removing ${n} (${PK[n][0]}) ...`);await sleep(300);inst.delete(n)}}
+  else if(s==='list'){pr('Listing... Done');(a.includes('--installed')?[...inst].sort():Object.keys(PK)).forEach(n=>pr(`<span class="g">${n}</span>/kali-rolling ${PK[n]?PK[n][0]:'1.0'} amd64${inst.has(n)?' [installed]':''}`))}
+  else if(s==='search'){if(!k[0])return err('E: You must give at least one search pattern');pr('Sorting... Done\nFull Text Search... Done');Object.entries(PK).filter(([n,i])=>n.includes(k[0])||i[2].includes(k[0])).forEach(([n,i])=>pr(`<span class="g">${n}</span>/kali-rolling ${i[0]} amd64${inst.has(n)?' [installed]':''}\n  ${i[2]}`))}
+  else pr('Usage: apt [options] command\n\nMost used commands:\n  list / search / install / remove / update / upgrade')}
+
+async function run(raw){const t=raw.trim();pr(P1()+'\n'+P2+esc(t));if(!t)return;hist.unshift(t);hi=-1;if(window.Android&&!/^(clear|exit|history|aq|help)\b/.test(t))return realRun(t);let p=t.split(/\s+/),r=false;
+  if(p[0]==='sudo'){r=true;p=p.slice(1);if(!p.length)return pr('usage: sudo -h | -K | -k | -V')}
+  const c=p[0],a=p.slice(1);if(c==='apt'||c==='apt-get')await apt(a,r);else if(C[c])await C[c](a,r);else if(inst.has(c))pr(`${c}: running...`,'d');else nf(c)}
+
+/* ── REAL SHELL (only inside the APK, via WebView bridge) ── */
+const NA=window.Android;let cwd=NA?NA.home():'',sid=0,cur=null;
+window.__out=(id,b)=>{let t=new TextDecoder().decode(Uint8Array.from(atob(b),c=>c.charCodeAt(0)));const m=t.match(/@@CWD@@(.*)\n?/);if(m){cwd=m[1].trim();t=t.replace(m[0],'')}t=t.replace(/\x1b\[[0-9;]*[A-Za-z]/g,'').replace(/\n$/,'');if(t)pr(esc(t))};
+function realRun(t){return new Promise(res=>{cur='c'+(++sid);window.__done=()=>{cur=null;dir=cwd;syncP();res()};NA.exec(cur,t,cwd)})}
+if(NA)dir=cwd;
+/* ── SIDE TERMINAL ── */
+let sideOpen=false,sideFull=false;
+const termSide=$('termSide'),sout=$('sout'),sci=$('sci');
+activeOut=sout;activeCI=sci;activeP1El=$('sp1');
+
+function openTerm(){
+  if(!sideOpen){sideOpen=true;termSide.classList.add('open');termSide.classList.remove('full');syncP();
+    if(!sout.children.length){activeOut=sout;pr('<span class="g">Kali GNU/Linux Rolling</span>  <span class="d">kernel 6.6.9-amd64</span>');pr(`<span class="d">Last login: ${new Date().toUTCString()} on pts/0</span>`);pr('Type <span class="w">help</span> for available commands\nType <span class="w">aq</span> for aquarium control\n')}
+    setTimeout(()=>sci.focus(),400)}
+  else if(!sideFull){sideFull=true;termSide.classList.add('full')}
+  else{sideFull=false;termSide.classList.remove('full')}}
+function closeTerm(){sideOpen=false;sideFull=false;termSide.classList.remove('open','full');sci.blur()}
+$('stclose').onclick=closeTerm;$('stkill').onclick=()=>{if(NA&&cur)NA.kill(cur)};
+$('stfull').onclick=()=>{if(!sideOpen)return;sideFull=!sideFull;termSide.classList.toggle('full',sideFull)};
+
+sci.addEventListener('keydown',async e=>{
+  if(e.key==='Enter'){activeOut=sout;const v=sci.value;sci.value='';await run(v)}
+  else if(e.key==='ArrowUp'){e.preventDefault();if(hi<hist.length-1)sci.value=hist[++hi]}
+  else if(e.key==='ArrowDown'){e.preventDefault();sci.value=hi>0?hist[--hi]:(hi=-1,'')}
+  else if(e.key==='Tab'){e.preventDefault();const m=[...Object.keys(C),'apt','sudo','aq'].find(c=>c.startsWith(sci.value)&&sci.value);if(m)sci.value=m+' '}
+  else if(e.ctrlKey&&e.key==='l'){e.preventDefault();sout.innerHTML=''}});
+sout.onclick=()=>sci.focus();
+
+/* ── fullscreen terminal (legacy, not used by default) ── */
+const ci=$('ci');
+ci.addEventListener('keydown',async e=>{
+  if(e.key==='Enter'){activeOut=$('out');const v=ci.value;ci.value='';await run(v)}
+  else if(e.key==='ArrowUp'){e.preventDefault();if(hi<hist.length-1)ci.value=hist[++hi]}
+  else if(e.key==='ArrowDown'){e.preventDefault();ci.value=hi>0?hist[--hi]:(hi=-1,'')}
+  else if(e.key==='Tab'){e.preventDefault();const m=[...Object.keys(C),'apt','sudo','aq'].find(c=>c.startsWith(ci.value)&&ci.value);if(m)ci.value=m+' '}
+  else if(e.ctrlKey&&e.key==='l'){e.preventDefault(),$('out').innerHTML=''}});
+$('out').onclick=()=>ci.focus();
+$('tx').onclick=()=>$('term').classList.remove('open');
+
+function fit(){const v=window.visualViewport;if(!v)return;if($('term').classList.contains('open')){$('term').style.height=v.height+'px';$('term').style.top=v.offsetTop+'px'}$('out').scrollTop=$('out').scrollHeight;sout.scrollTop=sout.scrollHeight}
+if(window.visualViewport){visualViewport.addEventListener('resize',fit);visualViewport.addEventListener('scroll',fit)}
+</script>
+</body>
+</html>
