@@ -7,6 +7,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MainActivity extends Activity {
@@ -23,6 +24,14 @@ public class MainActivity extends Activity {
         wv.setBackgroundColor(0xFF000000);
         wv.addJavascriptInterface(new Bridge(), "Android");
         wv.loadUrl("file:///android_asset/index.html");
+    }
+
+    static int pidOf(Process p) {
+        try {
+            Field f = p.getClass().getDeclaredField("pid");
+            f.setAccessible(true);
+            return f.getInt(p);
+        } catch (Exception e) { return -1; }
     }
 
     class Bridge {
@@ -53,7 +62,15 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void kill(String id) {
             Process p = procs.get(id);
-            if (p != null) p.destroy();
+            if (p == null) return;
+            int pid = pidOf(p);
+            if (pid > 0) {
+                try {
+                    String k = "pkill -9 -P " + pid + " 2>/dev/null || { ps -A -o PID,PPID | while read a b; do [ \"$b\" = " + pid + " ] && kill -9 $a; done; }; kill -9 " + pid;
+                    Runtime.getRuntime().exec(new String[]{"/system/bin/sh", "-c", k}).waitFor();
+                } catch (Exception e) { }
+            }
+            p.destroy();
         }
     }
 
