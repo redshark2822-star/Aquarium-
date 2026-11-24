@@ -11,7 +11,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'Co
 /* ── layout: aquarium + optional side terminal ── */
 #root{display:flex;height:100%;width:100%;position:relative}
 #tank{flex:1;position:relative;overflow:hidden;
-  background:linear-gradient(#040d16,#061120 45%,#020810);
+  background:linear-gradient(#0b3a66,#082848 30%,#041428 65%,#020a16);
   touch-action:none;user-select:none;-webkit-user-select:none;min-width:0}
 #glow{position:absolute;inset:0;
   background:radial-gradient(ellipse 80% 40% at 50% -8%,rgba(0,80,180,.22),transparent 70%);
@@ -42,7 +42,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'Co
 #hackOverlay{position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
 #hackOverlay.on{display:flex;animation:glitch 2s infinite}
 @keyframes glitch{0%,100%{opacity:1}48%{opacity:1}50%{opacity:.7;transform:translate(2px,-1px)}52%{opacity:1;transform:none}}
-#hackTxt{color:#0f0;font-size:clamp(10px,2.5vw,16px);text-align:center;line-height:1.6;text-shadow:0 0 10px #0f0}
+#hackTxt{color:#fff;font-size:clamp(10px,2.5vw,16px);text-align:center;line-height:1.6;text-shadow:none}
 
 /* ── badge / toast ── */
 #badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:2px;padding:4px 12px;border:1px solid;border-radius:20px;background:rgba(0,0,0,.7);opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none;z-index:5}
@@ -53,19 +53,19 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'Co
 /* ── swipe-left panel ── */
 #hint{position:absolute;top:50%;left:4px;transform:translateY(-50%);font-size:9px;letter-spacing:1px;color:rgba(255,255,255,.2);pointer-events:none;writing-mode:vertical-rl;text-orientation:mixed;animation:pu 3s infinite}
 @keyframes pu{50%{opacity:.2}}
-#panel{position:absolute;top:0;left:0;bottom:0;width:176px;background:#050d14;border-right:1px solid #0a1a28;
+#panel{position:absolute;top:0;left:0;bottom:0;width:130px;background:#050d14;border-right:1px solid #0a1a28;
   transform:translateX(-105%);transition:transform .35s cubic-bezier(.25,.8,.25,1);z-index:10;
   display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 8px calc(10px + env(safe-area-inset-bottom,0px))}
 #panel.open{transform:none}
 .hd2{width:3px;height:36px;background:#0a1e30;border-radius:2px;margin:0 auto 12px}
-#g{display:grid;grid-template-columns:1fr 1fr;gap:6px;overflow-y:auto}
-.b{padding:8px 2px 7px;border:1px solid #0d1e2e;border-radius:8px;background:#060f19;font-size:10px;color:var(--c);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+#g{display:grid;grid-template-columns:1fr;gap:6px;overflow-y:auto}
+.b{padding:8px 2px 7px;border:1px solid #0d1e2e;border-radius:8px;background:#0a1a2a;font-size:10px;color:#ddd;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
 .b.on{border-color:var(--c);background:#0a1e30}
 .b:active{transform:scale(.95)}
-.b pre{font:bold 9px/9px 'Courier New',monospace;margin:0;min-height:27px;display:flex;align-items:center;white-space:pre;text-shadow:0 0 6px var(--c)}
+.b pre{font:9px/9px 'Courier New',monospace;margin:0;min-height:27px;display:flex;align-items:center;white-space:pre}
 
 /* ── split-screen terminal ── */
-#termSide{width:0;overflow:hidden;background:#000;border-left:1px solid #111;transition:width .35s cubic-bezier(.25,.8,.25,1);display:flex;flex-direction:column;flex-shrink:0}
+#termSide{order:-1;width:0;overflow:hidden;background:#000;border-right:1px solid #1a2a3a;transition:width .35s cubic-bezier(.25,.8,.25,1);display:flex;flex-direction:column;flex-shrink:0}
 #termSide.open{width:min(52vw,420px)}
 #termSide.full{width:100vw}
 
@@ -81,8 +81,14 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'Co
 .tir{padding:5px 12px calc(6px + env(safe-area-inset-bottom,0px));border-top:1px solid #111;font-size:11px;flex-shrink:0}
 .tp2{display:flex;align-items:center}
 .tci{flex:1;min-width:0;margin-left:6px;background:transparent;border:0;outline:0;color:#ddd;font:inherit;caret-color:#fff;user-select:text;-webkit-user-select:text}
-.pl{color:#4466aa}.pu{color:#2255cc;font-weight:700}.pp{color:#aaa;font-weight:700}
-.g{color:#3dff7a}.c{color:#2ab8d8}.y{color:#c8a830}.r{color:#cc4444}.d{color:#444}.w{color:#bbb}.dr{color:#3366cc;font-weight:700}
+.pl{color:#888}.pu{color:#fff;font-weight:700}.pp{color:#ccc;font-weight:700}
+.g{color:#fff}.c{color:#ddd}.y{color:#ccc}.r{color:#fff;font-weight:700}.d{color:#777}.w{color:#eee}.dr{color:#fff;font-weight:700}
+.wp{position:absolute;white-space:pre;font-size:11px;line-height:12px;font-weight:700;color:#fff;pointer-events:none}
+.wp.sw{animation:sx .2s}@keyframes sx{50%{transform:scale(1.5)}}
+.pj{position:absolute;color:#fff;font-size:11px;line-height:11px;white-space:pre;pointer-events:none;transition-property:left,top;transition-timing-function:linear;transform:translate(-50%,-50%)}
+.ex{position:absolute;white-space:pre;color:#fff;pointer-events:none;animation:ex .45s ease-out forwards}
+@keyframes ex{from{transform:translate(-50%,-50%) scale(.3);opacity:1}to{transform:translate(-50%,-50%) scale(1.3);opacity:0}}
+.e.hit{animation:ht .25s}@keyframes ht{50%{filter:brightness(3);opacity:.4}}
 </style>
 </head>
 <body>
@@ -138,10 +144,11 @@ let ents=[],mode=null,po=false;
 const FM={'<':'>','>':'<','(':')',')':'(','/':'\\','\\':'/','[':']',']':'[','{':'}','}':'{','`':"'","'":'`'};
 const flip=s=>{const L=s.split('\n'),w=Math.max(...L.map(l=>l.length));return L.map(l=>[...l.padEnd(w)].reverse().map(c=>FM[c]||c).join('')).join('\n')};
 
+const CN={},HP={fish:15,shrimp:10,octo:30,crab:25,jelly:20};
 class E{
   constructor(k,a,c,x,y){this.k=k;this.a=a;this.L=flip(a);const L=a.split('\n');this.h=L.length*12;this.w=Math.max(...L.map(l=>l.length))*7.2;this.x=x;this.y=y;
     this.el=document.createElement('div');this.el.className='e';this.el.style.color=c;this.el.textContent=a;tank.appendChild(this.el);
-    this.el.onclick=ev=>{if(mode==='del'){ev.stopPropagation();this.kill()}};ents.push(this)}
+    this.el.onclick=ev=>{if(mode==='del'){ev.stopPropagation();this.kill()}};this.id=k+(CN[k]=(CN[k]||0)+1);this.hp=HP[k]||0;ents.push(this)}
   draw(){this.el.style.left=this.x+'px';this.el.style.top=this.y+'px'}
   face(r){if(r!==this.r){this.r=r;this.el.textContent=r?this.a:this.L}}
   kill(){ents.splice(ents.indexOf(this),1);this.el.classList.add('pop');setTimeout(()=>this.el.remove(),300);toast('Deleted')}
@@ -203,8 +210,8 @@ let tt;function toast(m){const e=$('toast');e.textContent=m;e.classList.add('on'
 
 /* ── left panel buttons ── */
 const BT=[['feed',"  ° ·  °\n · : ˙ ·\n ˙  ∘ ·",'Feed','#c8a830','TAP TO DROP FOOD'],['fish'," ,--.\n><((°>\n '--'",'Fish','#4dd8ff','TAP TO ADD FISH'],['shrimp',"  .-.\n~=(°>\n   ''",'Shrimp','#ff8a65','TAP TO ADD SHRIMP'],['weed'," ) ( \n( ) )\n ) ( ",'Seaweed','#4cd964','TAP TO PLANT SEAWEED'],
-['shell'," .--. \n(_@@_)\n '--' ",'Shell','#f8bbd0','TAP TO PLACE A SHELL'],['octo'," .---. \n( o o )\n/|/|/|\\",'Octopus','#c792ea','TAP TO ADD OCTOPUS'],['del',"\\ /\n X \n/ \\",'Delete','#cc3333','TAP AN ITEM TO DELETE'],['term',"┌───┐\n│$_ │\n└───┘",'Terminal','#2a9a4a']];
-BT.forEach(b=>{const d=document.createElement('div');d.className='b';d.style.setProperty('--c',b[3]);d.innerHTML='<pre></pre>'+b[2];d.firstChild.textContent=b[1];d.dataset.m=b[0];
+['shell'," .--. \n(_@@_)\n '--' ",'Shell','#f8bbd0','TAP TO PLACE A SHELL'],['octo'," .---. \n( o o )\n/|/|/|\\",'Octopus','#c792ea','TAP TO ADD OCTOPUS'],['del',"\\ /\n X \n/ \\",'Delete','#cc3333','TAP AN ITEM TO DELETE'],['term',"┌───┐\n│$_ │\n└───┘",'Terminal','#ddd']];
+BT.filter(b=>b[0]==='term').forEach(b=>{const d=document.createElement('div');d.className='b';d.style.setProperty('--c',b[3]);d.innerHTML='<pre></pre>'+b[2];d.firstChild.textContent=b[1];d.dataset.m=b[0];
   d.onclick=e=>{e.stopPropagation();b[0]==='term'?openTerm():setMode(b[0])};$('g').appendChild(d)});
 function setMode(m){const bd=$('badge'),B=BT.find(b=>b[0]===m);document.body.classList.remove('del');
   document.querySelectorAll('.b').forEach(x=>x.classList.remove('on'));
@@ -270,9 +277,81 @@ const isD=p=>Array.isArray(FS[p]),rpp=a=>a==='~'||a.startsWith('~/')?a:dir+'/'+a
 const nf=c=>err('zsh: command not found: '+esc(c));
 const ipRnd=()=>`10.10.${1+rnd(50)}.${2+rnd(200)}`;
 
+/* ── COMBAT / WEAPONS ── */
+const aq2=(()=>{
+const WP={knife:['-=>',26,1,500,'m'],axe:['--{|',34,3,1100,'m'],sword:['+=====>',50,2,700,'m'],trident:['-----Ψ',46,2,800,'m'],spear:['------>',60,2,900,'m'],
+ bow:['}->',260,1,1200,'r','->'],pistol:['r=',220,1,600,'r','·'],rifle:['r====',340,2,800,'r','-'],grenade:['(@)',150,3,2500,'x','@',45],bazooka:['[=====]>',380,4,3000,'x','=>',65]};
+let war=false;
+const cx=e=>e.x+e.w/2,cy=e=>e.y+e.h/2,fc=e=>e.r!==undefined?e.r:e.vx>=0;
+const alive=()=>ents.filter(e=>HP[e.k]&&!e.dead);
+const rs=s=>{s=String(s||'').toLowerCase();const A=alive();return s==='all'||s==='*'?A:A.filter(e=>e.id===s||e.k===s)};
+const nm=L=>L.length>5?L.length+' entities':L.map(e=>e.id).join(', ');
+const gap=(a,b)=>Math.hypot(Math.max(0,Math.abs(cx(a)-cx(b))-(a.w+b.w)/2),Math.max(0,Math.abs(cy(a)-cy(b))-(a.h+b.h)/2));
+const lg=(h,c)=>{pr(h,c);const o=getOut();while(o.children.length>300)o.firstChild.remove()};
+const die=e=>{const i=ents.indexOf(e);if(i<0)return;ents.splice(i,1);e.dead=1;e.el.classList.add('pop');setTimeout(()=>e.el.remove(),300);if(e.wd)e.wd.remove()};
+const d0=E.prototype.draw,k0=E.prototype.kill;
+E.prototype.draw=function(){d0.call(this);const d=this.wd;if(!d)return;const r=fc(this);if(d._r!==r){d._r=r;d.textContent=r?d._g:flip(d._g)}
+  d.style.left=(r?this.x+this.w-4:this.x-d._g.length*6.6+4)+'px';d.style.top=(this.y+this.h/2-6)+'px'};
+E.prototype.kill=function(){this.dead=1;if(this.wd)this.wd.remove();k0.call(this)};
+const arm=(e,w)=>{e.wp=w;if(!e.wd){const d=document.createElement('div');d.className='wp';tank.appendChild(d);e.wd=d}e.wd._g=WP[w][0];e.wd._r=null;e.draw()};
+const num=(t,x)=>{const p=document.createElement('div');p.className='f';p.textContent=x;p.style.cssText=`left:${t.x+t.w/2}px;top:${t.y-4}px;--y:-20px;--d:.8s;color:#fff;font-size:11px`;tank.appendChild(p);p.onanimationend=()=>p.remove()};
+const hurt=(t,d,by,wn)=>{if(t.dead)return;t.hp-=d;t.el.classList.add('hit');setTimeout(()=>t.el.classList.remove('hit'),250);num(t,'-'+d);
+  if(t.hp<=0){die(t);lg(`${by.id} killed ${t.id} (${wn})`,'w')}else lg(`${by.id} hit ${t.id} with ${wn}: -${d}hp, ${t.hp} left`,'d')};
+const boom=(a,x,y,w)=>{const R=w[6],e=document.createElement('div');e.className='ex';e.textContent='\\|/\n-*-\n/|\\';
+  e.style.cssText=`left:${x}px;top:${y}px;font-size:${R*.6}px;line-height:${R*.5}px`;tank.appendChild(e);e.onanimationend=()=>e.remove();
+  alive().filter(v=>v!==a&&Math.hypot(cx(v)-x,cy(v)-y)<=R+v.w/2).forEach(v=>hurt(v,w[2],a,a.wp))};
+const shoot=(a,t,w)=>{const x0=cx(a),y0=cy(a),x1=cx(t),y1=cy(t),ms=Math.max(150,Math.hypot(x1-x0,y1-y0)*1.4),p=document.createElement('div');
+  p.className='pj';p.textContent=w[5];p.style.left=x0+'px';p.style.top=y0+'px';tank.appendChild(p);void p.offsetWidth;
+  p.style.transitionDuration=ms+'ms';p.style.left=x1+'px';p.style.top=y1+'px';
+  setTimeout(()=>{p.remove();if(w[4]==='x')boom(a,x1,y1,w);else if(!t.dead&&Math.random()<.85)hurt(t,w[2],a,a.wp);else lg(`${a.id} missed ${t.id}`,'d')},ms)};
+const strike=(a,t,w)=>{
+  if(!w){const sa=a.w*a.h,st=t.w*t.h,win=Math.random()<sa/(sa+st)?a:t,lose=win===a?t:a;die(lose);lg(`${win.id} ate ${lose.id}`,'w');return}
+  const g=a.wd;g.classList.remove('sw');void g.offsetWidth;g.classList.add('sw');
+  if(w[4]==='m')hurt(t,w[2],a,a.wp);else shoot(a,t,w)};
+const chase=(a,t)=>{const dx=cx(t)-cx(a),dy=cy(t)-cy(a);
+  if(a instanceof Fish){a.tx=t.x;a.ty=t.y}
+  else if(a instanceof Walker){a.tx=t.x;if(dy<-10&&Math.abs(dx)<50&&a.y>=FL()-a.h+1&&Math.random()<.05){a.vy=-4.5;a.y-=1}}
+  else{a.vx=Math.sign(dx)*.9;a.y+=Math.sign(dy)*.8}};
+setInterval(()=>{const now=Date.now();
+  alive().forEach(a=>{if(a.dead||!a.foe)return;const T=rs(a.foe).filter(t=>t!==a);
+    if(!T.length){a.foe=null;a.tx=null;return}
+    let t=T[0],bd=1e9;T.forEach(x=>{const g=gap(a,x);if(g<bd){bd=g;t=x}});
+    const w=a.wp&&WP[a.wp];
+    if(w&&w[4]!=='m'&&bd<w[1]*.7)a.tx=null;else chase(a,t);
+    if(bd<=(w?w[1]:4)&&now>=(a.nx||0)){a.nx=now+(w?w[3]:700)*1.7*(.8+Math.random()*.4);strike(a,t,w)}});
+  if(war){const A=alive();if(A.length<=1){war=false;lg(A.length?A[0].id+' wins':'no survivors','w')}}},50);
+const HELP=[['aq add <type> [n]','fish shrimp octo weed shell'],['aq feed','drop food'],['aq rm <target>','aq rm fish | aq rm fish2 | aq rm all'],['aq ls','list entities'],['aq weapons','list weapons'],
+ ['aq give <target> <weapon>','aq give fish2 spear'],['aq unarm <target>','remove weapon'],['aq <A> attack <B>','aq fish1 attack shrimp'],['aq all attack','everyone vs everyone'],['aq stop','end the fight'],['aq status|water|nowater|hack|clear','tank']];
+return args=>{const [s,a1,a2]=args;
+  if(!s||s==='help'){pr('<span class="g">aq: aquarium control</span>');HELP.forEach(([c,d])=>pr(`  <span class="c">${esc(c).padEnd(34)}</span><span class="d">${esc(d)}</span>`));pr('<span class="d">target = name (fish2), type (fish) or all</span>');return true}
+  if(a1==='attack'){const A=rs(s),B=a2||'all';
+    if(!A.length){err('no such entity: '+esc(s));return true}
+    if(!rs(B).length){err('no such target: '+esc(B));return true}
+    A.forEach(e=>e.foe=B);war=s==='all'&&B==='all';lg(war?'all entities attack each other':`${nm(A)} attack ${esc(B)}`,'w');return true}
+  if(s==='stop'){alive().forEach(e=>{e.foe=null;e.tx=null});war=false;pr('fight stopped');return true}
+  if(s==='give'){let t=a1,w=a2;if(WP[a1]){w=a1;t=a2||'all'}
+    if(!WP[w]){err('unknown weapon: '+esc(w||'')+'. try: aq weapons');return true}
+    const L=rs(t);if(!L.length){err('no such entity: '+esc(t||''));return true}
+    L.forEach(e=>arm(e,w));lg(`gave ${w} to ${nm(L)}`,'w');return true}
+  if(s==='unarm'){const L=rs(a1||'all');L.forEach(e=>{e.wp=null;if(e.wd){e.wd.remove();e.wd=null}});pr('unarmed '+nm(L));return true}
+  if(s==='weapons'){pr('<span class="g">weapon      range  dmg  type</span>');
+    Object.entries(WP).forEach(([n,w])=>pr(`${n.padEnd(10)} ${String(w[1]).padEnd(6)} ${String(w[2]).padEnd(4)} ${({m:'melee',r:'ranged',x:'explosive'})[w[4]]}  <span class="d">${esc(w[0])}</span>`));return true}
+  if(s==='ls'){const A=ents.filter(e=>HP[e.k]);pr('<span class="g">name        hp  weapon</span>');
+    A.forEach(e=>pr(`${e.id.padEnd(11)} ${String(e.hp).padEnd(3)} ${e.wp||'-'}${e.foe?'  <span class="d">-> '+esc(e.foe)+'</span>':''}`));
+    pr(`<span class="d">${ents.length-A.length} plants/decor not listed</span>`);return true}
+  if(s==='feed'){food(W()*(.2+Math.random()*.6),H()/4);pr('food dropped');return true}
+  if(s==='rm'){const L=a1==='all'?[...ents]:ents.filter(e=>e.id===a1||e.k===a1);if(!a1||!L.length){err('usage: aq rm <name|type|all>');return true}
+    L.forEach(e=>e.kill());pr(`removed ${L.length}`);return true}
+  if(s==='add'){let ty=a1,n=+a2||1;if(a1&&!isNaN(+a1)){n=+a1;ty=null}
+    ty=({seaweed:'weed',octopus:'octo'})[ty]||ty||Object.keys(CAP)[rnd(5)];
+    if(!CAP[ty]){err('types: '+Object.keys(CAP).join(' '));return true}
+    const b=ents.length;for(let i=0;i<Math.min(n,10);i++)add(ty,30+rnd(W()-80),40+rnd(H()-150));
+    ents.length>b?pr(`added ${ents.length-b} ${ty}`):err('limit reached for '+ty);return true}
+  return false}})();
+
 /* ── AQUARIUM COMMANDS ── */
 let noWater=false;
-function aqCmd(args){
+function aqCmd(args){if(aq2(args))return;
   const sub=args[0]||'',arg2=args[1]||'',arg3=args[2]||'';
   if(!sub){
     pr('<span class="g">aq — aquarium control</span>');
@@ -331,7 +410,7 @@ async function hackServer(){
   // show defacement on aquarium
   const ov=$('hackOverlay'),txt=$('hackTxt');
   ov.classList.add('on');
-  txt.innerHTML=`<span style="color:#0f0">
+  txt.innerHTML=`<span style="color:#fff">
  _   _    _    ____ _  _______ ____  
 | | | |  / \\  / ___| |/ / ____|  _ \\ 
 | |_| | / _ \\| |   | ' /|  _| | | | |
@@ -345,11 +424,11 @@ async function hackServer(){
   ██████╔╝   ██║       ███████║██╔╝ ██╗
   ╚═════╝    ╚═╝       ╚══════╝╚═╝  ╚═╝
 
-<span style="color:#0a0">  HACKED BY shadowxploit</span>
-  <span style="color:#060">this site has been pwned</span>
-  <span style="color:#040">contact: shadowxploit@kali</span>
+<span style="color:#bbb">  HACKED BY shadowxploit</span>
+  <span style="color:#888">this site has been pwned</span>
+  <span style="color:#666">contact: shadowxploit@kali</span>
 
-  <span style="color:#0a0">[ tap to close ]</span>
+  <span style="color:#bbb">[ tap to close ]</span>
 </span>`;
   ov.style.pointerEvents='auto';
   ov.onclick=()=>{ov.classList.remove('on');ov.style.pointerEvents='none'}}
@@ -407,7 +486,7 @@ async function apt(a,r){const s=a[0],k=a.slice(1).filter(x=>x[0]!=='-');
   else if(s==='search'){if(!k[0])return err('E: You must give at least one search pattern');pr('Sorting... Done\nFull Text Search... Done');Object.entries(PK).filter(([n,i])=>n.includes(k[0])||i[2].includes(k[0])).forEach(([n,i])=>pr(`<span class="g">${n}</span>/kali-rolling ${i[0]} amd64${inst.has(n)?' [installed]':''}\n  ${i[2]}`))}
   else pr('Usage: apt [options] command\n\nMost used commands:\n  list / search / install / remove / update / upgrade')}
 
-async function run(raw){const t=raw.trim();pr(P1()+'\n'+P2+esc(t));if(!t)return;hist.unshift(t);hi=-1;if(window.Android&&!/^(clear|exit|history|aq|help)\b/.test(t))return realRun(t);let p=t.split(/\s+/),r=false;
+async function run(raw){const t=raw.trim();pr(P1()+'\n'+P2+esc(t));if(!t)return;hist.unshift(t);hi=-1;const at=t.match(/^(\S+)\s+attack(?:\s+(\S+))?$/);if(at){aqCmd([at[1],'attack',at[2]]);return}if(window.Android&&!/^(clear|exit|history|aq|help)\b/.test(t))return realRun(t);let p=t.split(/\s+/),r=false;
   if(p[0]==='sudo'){r=true;p=p.slice(1);if(!p.length)return pr('usage: sudo -h | -K | -k | -V')}
   const c=p[0],a=p.slice(1);if(c==='apt'||c==='apt-get')await apt(a,r);else if(C[c])await C[c](a,r);else if(inst.has(c))pr(`${c}: running...`,'d');else nf(c)}
 
@@ -423,7 +502,7 @@ activeOut=sout;activeCI=sci;activeP1El=$('sp1');
 
 function openTerm(){
   if(!sideOpen){sideOpen=true;termSide.classList.add('open');termSide.classList.remove('full');syncP();
-    if(!sout.children.length){activeOut=sout;pr('<span class="g">Kali GNU/Linux Rolling</span>  <span class="d">kernel 6.6.9-amd64</span>');pr(`<span class="d">Last login: ${new Date().toUTCString()} on pts/0</span>`);pr('Type <span class="w">help</span> for available commands\nType <span class="w">aq</span> for aquarium control\n')}
+    if(!sout.children.length){activeOut=sout;if(NA){if(NA.ready())pr('<span class="g">Kali GNU/Linux (real, proot)</span>');else pr('<span class="g">Shell Android biasa.</span> Taip <span class="w">kali-setup</span> untuk pasang Kali sebenar (download ~200MB+, perlu WiFi)');}else{pr('<span class="g">Kali GNU/Linux Rolling</span>  <span class="d">(simulation - real shell only works in the APK)</span>');}pr('Type <span class="w">help</span> for available commands\nType <span class="w">aq</span> for aquarium control\n')}
     setTimeout(()=>sci.focus(),400)}
   else if(!sideFull){sideFull=true;termSide.classList.add('full')}
   else{sideFull=false;termSide.classList.remove('full')}}
